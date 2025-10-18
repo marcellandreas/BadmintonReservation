@@ -1,6 +1,7 @@
 import User from "../models/User.js";
 
 export const authUser = async (req, res, next) => {
+  console.log("auth middleware");
   try {
     const { userId } = req.auth();
     if (!userId) {
