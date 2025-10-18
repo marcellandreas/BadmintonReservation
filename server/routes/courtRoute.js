@@ -1,16 +1,24 @@
-const express = require('express');
-const router = express.Router();
-const courtController = require('../controller/courtController');
-const { authMiddleware, adminMiddleware } = require('../middleware/authMiddleware');
+import express from "express";
+import {
+  getAllCourts,
+  getAvailableCourts,
+  getCourtById,
+  createCourt,
+  updateCourt,
+  deleteCourt,
+} from "../controllers/courtController.js";
+import authMiddleware from "../middleware/authMiddleware.js";
+
+const courtRouter = express.Router();
 
 // Public routes
-router.get('/', courtController.getAllCourts);
-router.get('/available', courtController.getAvailableCourts);
-router.get('/:id', courtController.getCourtById);
+courtRouter.get("/", getAllCourts);
+courtRouter.get("/available", getAvailableCourts);
+courtRouter.get("/:id", getCourtById);
 
 // Admin routes
-router.post('/', authMiddleware, adminMiddleware, courtController.createCourt);
-router.put('/:id', authMiddleware, adminMiddleware, courtController.updateCourt);
-router.delete('/:id', authMiddleware, adminMiddleware, courtController.deleteCourt);
+courtRouter.post("/", authMiddleware, createCourt);
+courtRouter.put("/:id", authMiddleware, updateCourt);
+courtRouter.delete("/:id", authMiddleware, deleteCourt);
 
-module.exports = router;
+export default courtRouter;

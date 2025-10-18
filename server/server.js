@@ -7,6 +7,8 @@ import { clerkMiddleware } from "@clerk/express";
 // import router
 import userRouter from "./routes/userRoute.js";
 import clerkWebhooks from "./controller/ClerkWebHooks.js";
+import bookingRouter from "./routes/bookingRoute.js";
+import courtRouter from "./routes/courtRoute.js";
 
 const port = process.env.PORT || 3000;
 
@@ -29,6 +31,8 @@ app.get("/", (req, res) => res.send("Api Successfully Connected"));
 
 // define api routes
 app.use("/api/user", userRouter);
+app.use("/api/booking", bookingRouter);
+app.use("/api/court", courtRouter);
 
 // start
 app.listen(port, () =>

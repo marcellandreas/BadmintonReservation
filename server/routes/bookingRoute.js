@@ -8,19 +8,19 @@ import {
   updateBookingStatus,
   updatePaymentStatus,
 } from "../controller/bookingController.js";
-import  authMiddleware from "../middleware/authMiddleware.js";
+import authMiddleware from "../middleware/authMiddleware.js";
 
-const routerBooking = express.Router();
+const bookingRouter = express.Router();
 
 // Protected routes (require authentication)
-routerBooking.get("/my-bookings", authMiddleware, getUserBookings);
-routerBooking.post("/", authMiddleware, createBooking);
-routerBooking.get("/:id", authMiddleware, getBookingById);
-routerBooking.put("/:id/cancel", authMiddleware, cancelBooking);
+bookingRouter.get("/my-bookings", authMiddleware, getUserBookings);
+bookingRouter.post("/", authMiddleware, createBooking);
+bookingRouter.get("/:id", authMiddleware, getBookingById);
+bookingRouter.put("/:id/cancel", authMiddleware, cancelBooking);
 
 // Admin routes
-routerBooking.get("/", authMiddleware, getAllBookings);
-routerBooking.put("/:id/status", authMiddleware, updateBookingStatus);
-routerBooking.put("/:id/payment", authMiddleware, updatePaymentStatus);
+bookingRouter.get("/", authMiddleware, getAllBookings);
+bookingRouter.put("/:id/status", authMiddleware, updateBookingStatus);
+bookingRouter.put("/:id/payment", authMiddleware, updatePaymentStatus);
 
-export default routerBooking;
+export default bookingRouter;

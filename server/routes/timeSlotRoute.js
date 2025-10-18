@@ -1,16 +1,24 @@
-const express = require('express');
-const router = express.Router();
-const timeSlotController = require('../controller/timeSlotController');
-const { authMiddleware, adminMiddleware } = require('../middleware/authMiddleware');
+import express from "express";
+import {
+  getAllTimeSlots,
+  getAvailableTimeSlots,
+  getTimeSlotById,
+  createTimeSlot,
+  updateTimeSlot,
+  deleteTimeSlot,
+} from "../controller/timeSlotController.js";
+import authMiddleware from "../middleware/authMiddleware.js";
+
+const timeSlotRouter = express.Router();
 
 // Public routes
-router.get('/', timeSlotController.getAllTimeSlots);
-router.get('/available', timeSlotController.getAvailableTimeSlots);
-router.get('/:id', timeSlotController.getTimeSlotById);
+timeSlotRouter.get("/", getAllTimeSlots);
+timeSlotRouter.get("/available", getAvailableTimeSlots);
+timeSlotRouter.get("/:id", getTimeSlotById);
 
 // Admin routes
-router.post('/', authMiddleware, adminMiddleware, timeSlotController.createTimeSlot);
-router.put('/:id', authMiddleware, adminMiddleware, timeSlotController.updateTimeSlot);
-router.delete('/:id', authMiddleware, adminMiddleware, timeSlotController.deleteTimeSlot);
+timeSlotRouter.post("/", authMiddleware, createTimeSlot);
+timeSlotRouter.put("/:id", authMiddleware, updateTimeSlot);
+timeSlotRouter.delete("/:id", authMiddleware, deleteTimeSlot);
 
-module.exports = router;
+export default timeSlotRouter;
