@@ -6,7 +6,7 @@ import {
   createCourt,
   updateCourt,
   deleteCourt,
-} from "../controllers/courtController.js";
+} from "../controller/courtController.js";
 import authMiddleware from "../middleware/authMiddleware.js";
 
 const courtRouter = express.Router();

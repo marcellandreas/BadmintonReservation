@@ -1,22 +1,24 @@
 "use client";
 
-import Image from "next/image";
-import React, { useState } from "react";
+import { useState, useEffect } from "react";
+import { useAppContext } from "@/context/AppContext";
+import toast from "react-hot-toast";
 import { GiShuttlecock } from "react-icons/gi";
 import { MdOutlineHome } from "react-icons/md";
 import { TbTexture } from "react-icons/tb";
+import { FaTrash } from "react-icons/fa";
 
-const Booking = () => {
-  const [accordion, setAccordion] = useState(false);
+const BookingPage = () => {
+  const { axios, getToken } = useAppContext();
+
+  // State Management
   const [selectedDate, setSelectedDate] = useState(null);
-  const [selectedTimes, setSelectedTimes] = useState([]);
+  const [courts, setCourts] = useState([]);
+  const [timeSlots, setTimeSlots] = useState([]);
+  const [selectedItems, setSelectedItems] = useState([]); // Array of { courtId, timeSlotId, courtName, timeRange, price }
+  const [loading, setLoading] = useState(false);
 
-  const handleSelectTime = (time) => {
-    setSelectedTimes((prev) =>
-      prev.includes(time) ? prev.filter((t) => t !== time) : [...prev, time]
-    );
-  };
-
+  // Generate dates for next 7 days
   const days = Array.from({ length: 7 }, (_, i) => {
     const date = new Date();
     date.setDate(date.getDate() + i);
@@ -27,530 +29,338 @@ const Booking = () => {
     date.toLocaleDateString("id-ID", { weekday: "long" });
   const formatDate = (date) =>
     date.toLocaleDateString("id-ID", { day: "numeric", month: "short" });
-
   const toDateValue = (date) => date.toISOString().split("T")[0];
 
+  // Fetch courts and timeslots when date is selected
+  useEffect(() => {
+    if (selectedDate) {
+      fetchCourtsAndTimeSlots();
+    }
+  }, [selectedDate]);
+
+  const fetchCourtsAndTimeSlots = async () => {
+    try {
+      setLoading(true);
+
+      // Fetch all courts
+      const courtsRes = await axios.get("/api/court");
+
+      // Fetch timeslots with availability info for selected date
+      const timeSlotsRes = await axios.get(
+        `/api/timeslot/available?date=${selectedDate}`
+      );
+
+      setCourts(courtsRes.data.data || []);
+      setTimeSlots(timeSlotsRes.data.data || []);
+    } catch (error) {
+      toast.error("Failed to load courts and timeslots");
+      console.error(error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Check if court-timeslot combination is already selected
+  const isItemSelected = (courtId, timeSlotId) => {
+    return selectedItems.some(
+      (item) => item.courtId === courtId && item.timeSlotId === timeSlotId
+    );
+  };
+
+  // Check if court-timeslot combination is already booked
+  const isItemBooked = async (courtId, timeSlotId) => {
+    try {
+      const res = await axios.get(
+        `/api/court/available?date=${selectedDate}&timeSlotId=${timeSlotId}`
+      );
+      const availableCourts = res.data.data || [];
+      return !availableCourts.some((court) => court._id === courtId);
+    } catch (error) {
+      console.error(error);
+      return false;
+    }
+  };
+
+  // Add item to cart
+  const handleAddItem = (court, timeSlot) => {
+    if (isItemSelected(court._id, timeSlot._id)) {
+      toast.error("Item already added");
+      return;
+    }
+
+    const newItem = {
+      courtId: court._id,
+      timeSlotId: timeSlot._id,
+      courtName: court.name,
+      timeRange: `${timeSlot.startTime} - ${timeSlot.endTime}`,
+      price: timeSlot.price,
+    };
+
+    setSelectedItems([...selectedItems, newItem]);
+    toast.success("Item added to booking");
+  };
+
+  // Remove item from cart
+  const handleRemoveItem = (index) => {
+    setSelectedItems(selectedItems.filter((_, i) => i !== index));
+    toast.success("Item removed");
+  };
+
+  // Calculate total price
+  const totalPrice = selectedItems.reduce((sum, item) => sum + item.price, 0);
+
+  // Submit booking
+  const handleSubmitBooking = async () => {
+    if (!selectedDate) {
+      toast.error("Please select a date");
+      return;
+    }
+
+    if (selectedItems.length === 0) {
+      toast.error("Please select at least one court and timeslot");
+      return;
+    }
+
+    try {
+      setLoading(true);
+
+      const bookingData = {
+        bookingDate: selectedDate,
+        items: selectedItems.map((item) => ({
+          courtId: item.courtId,
+          timeSlotId: item.timeSlotId,
+          price: item.price,
+        })),
+        notes: "",
+      };
+
+      const token = await getToken();
+      const response = await axios.post("/api/booking", bookingData, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (response.data.success) {
+        toast.success("Booking created successfully!");
+
+        // Redirect to payment or booking detail page
+        // window.location.href = `/payment/${response.data.data._id}`;
+
+        // Or reset form
+        setSelectedItems([]);
+        setSelectedDate(null);
+      }
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Failed to create booking");
+      console.error(error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
-    <div className="min-h-[80vh] container mx-auto my-4">
-      <h3 className="text-xl font-semibold mb-4">Pilih Lapangan</h3>
+    <div className="min-h-screen bg-gray-50 py-8">
+      <div className="container mx-auto px-4">
+        <h1 className="text-3xl font-bold mb-8">Book Your Court</h1>
 
-      {/* section selected date */}
-      <section className="w-full bg-white/80 backdrop-blur-lg border border-slate-200 shadow-md rounded-2xl p-5 flex gap-4 overflow-x-auto items-center">
-        {days.map((date, index) => {
-          const dateValue = toDateValue(date);
-          const isSelected = selectedDate === dateValue;
+        {/* Step 1: Select Date */}
+        <div className="bg-white rounded-2xl shadow-md p-6 mb-8">
+          <h2 className="text-xl font-semibold mb-4">Step 1: Select Date</h2>
+          <div className="flex gap-4 overflow-x-auto pb-4">
+            {days.map((date, index) => {
+              const dateValue = toDateValue(date);
+              const isSelected = selectedDate === dateValue;
 
-          return (
-            <div
-              key={index}
-              onClick={() => setSelectedDate(dateValue)}
-              className={`min-w-[90px] text-center border border-slate-300/50 bg-gradient-to-br from-indigo-50 to-white hover:from-indigo-100 hover:shadow-md transition-all rounded-xl p-2 cursor-pointer ${
-                isSelected ? "ring-2 ring-indigo-500 scale-105" : ""
-              }`}
-            >
-              <h5 className="text-sm font-semibold text-slate-700 capitalize">
-                {formatDay(date)}
-              </h5>
-              <span className="font-medium text-xs text-slate-600">
-                {formatDate(date)}
-              </span>
-            </div>
-          );
-        })}
-        <div className="flex items-center text-slate-400 font-semibold text-lg px-2">
-          |
+              return (
+                <div
+                  key={index}
+                  onClick={() => setSelectedDate(dateValue)}
+                  className={`min-w-[100px] text-center border-2 rounded-xl p-4 cursor-pointer transition-all ${
+                    isSelected
+                      ? "border-indigo-500 bg-indigo-50 scale-105"
+                      : "border-gray-300 bg-white hover:border-indigo-300"
+                  }`}
+                >
+                  <h5 className="text-sm font-semibold text-gray-700 capitalize">
+                    {formatDay(date)}
+                  </h5>
+                  <span className="text-xs text-gray-600">
+                    {formatDate(date)}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Custom date picker */}
+          <div className="mt-4 flex items-center gap-4">
+            <span className="text-gray-600">Or select custom date:</span>
+            <input
+              type="date"
+              className="border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              min={toDateValue(new Date())}
+              max={(() => {
+                const d = new Date();
+                d.setMonth(d.getMonth() + 3);
+                return toDateValue(d);
+              })()}
+              onChange={(e) => setSelectedDate(e.target.value)}
+              value={selectedDate || ""}
+            />
+          </div>
         </div>
-        <div className="flex flex-col items-center">
-          <label
-            htmlFor="customDate"
-            className="text-xs text-slate-600 mb-1 font-medium"
-          >
-            Pilih tanggal lain
-          </label>
-          <input
-            id="customDate"
-            type="date"
-            className="border border-gray-300 rounded-lg px-3 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-            min={toDateValue(new Date())}
-            max={(() => {
-              const d = new Date();
-              d.setMonth(d.getMonth() + 3);
-              return toDateValue(d);
-            })()}
-            onChange={(e) => setSelectedDate(e.target.value)}
-          />
-          <span className="text-xs text-slate-400 mt-1">
-            Maksimal 3 bulan dari hari ini
-          </span>
-        </div>
-        <div className="flex items-center text-slate-400 font-semibold text-lg px-2">
-          |
-        </div>
+
+        {/* Step 2: Select Courts & Timeslots */}
         {selectedDate && (
-          <div className="min-w-[120px] text-center  rounded-xl p-2">
-            <h5 className="text-sm font-semibold text-slate-700 capitalize">
-              Tanggal Booking
-            </h5>
-            <span className="font-medium text-xs text-slate-600">
-              {formatDay(new Date(selectedDate + "T00:00:00"))}{" "}
-              {formatDate(new Date(selectedDate + "T00:00:00"))}
-            </span>
+          <div className="bg-white rounded-2xl shadow-md p-6 mb-8">
+            <h2 className="text-xl font-semibold mb-4">
+              Step 2: Select Courts & Timeslots
+            </h2>
+
+            {loading ? (
+              <div className="text-center py-8">Loading...</div>
+            ) : (
+              <div className="space-y-8">
+                {courts.map((court) => (
+                  <div key={court._id} className="border rounded-xl p-6">
+                    <div className="flex gap-6 mb-4">
+                      <img
+                        src={court.image}
+                        alt={court.name}
+                        className="w-32 h-32 object-cover rounded-lg"
+                      />
+                      <div className="flex-1">
+                        <h3 className="text-2xl font-bold mb-2">
+                          {court.name}
+                        </h3>
+                        <p className="text-gray-600 mb-3">
+                          {court.description}
+                        </p>
+                        <div className="flex flex-col gap-2 text-gray-700 text-sm">
+                          <div className="flex items-center gap-2">
+                            <GiShuttlecock /> <span>Badminton</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <MdOutlineHome /> <span>{court.courtType}</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <TbTexture /> <span>{court.surfaceType}</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Timeslots */}
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
+                      {timeSlots.map((slot) => {
+                        const isSelected = isItemSelected(court._id, slot._id);
+                        const isBooked = slot.availableCourts === 0;
+
+                        return (
+                          <button
+                            key={slot._id}
+                            onClick={() => handleAddItem(court, slot)}
+                            disabled={isBooked || isSelected}
+                            className={`p-3 border-2 rounded-xl flex flex-col items-center justify-center transition-all ${
+                              isSelected
+                                ? "border-green-500 bg-green-50 cursor-not-allowed"
+                                : isBooked
+                                ? "border-gray-300 bg-gray-100 cursor-not-allowed opacity-50"
+                                : "border-indigo-500 bg-white hover:bg-indigo-50 cursor-pointer"
+                            }`}
+                          >
+                            <span className="text-xs text-gray-600">
+                              {slot.duration} min
+                            </span>
+                            <span className="font-bold text-sm">
+                              {slot.startTime} - {slot.endTime}
+                            </span>
+                            <span className="text-sm font-semibold text-indigo-600">
+                              {isBooked
+                                ? "Booked"
+                                : `Rp ${slot.price.toLocaleString()}`}
+                            </span>
+                            {isSelected && (
+                              <span className="text-xs text-green-600 mt-1">
+                                ✓ Added
+                              </span>
+                            )}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         )}
-      </section>
 
-      {/* card lapangan 1 */}
-      <div className=" mt-10 grid grid-cols-6 gap-x-5">
-        <div className=" bg-amber-300 col-span-2">
-          <Image src="/next.svg" alt="a" width={200} height={240} />
-        </div>
-        <div className=" col-span-4 bg-amber-300 p-5 ">
-          <div>
-            <h2 className=" font-bold text-2xl">Lapangan 1</h2>
-            <div>lapangan dengan karpet flypower</div>
-          </div>
-          <div className="flex flex-col gap-2 text-gray-700">
-            <div className="flex items-center gap-2">
-              <GiShuttlecock /> <span>Badminton</span>
+        {/* Step 3: Review & Submit */}
+        {selectedItems.length > 0 && (
+          <div className="bg-white rounded-2xl shadow-md p-6">
+            <h2 className="text-xl font-semibold mb-4">
+              Step 3: Review Your Booking
+            </h2>
+
+            <div className="space-y-3 mb-6">
+              {selectedItems.map((item, index) => (
+                <div
+                  key={index}
+                  className="flex items-center justify-between p-4 border rounded-lg"
+                >
+                  <div className="flex-1">
+                    <h4 className="font-semibold">{item.courtName}</h4>
+                    <p className="text-sm text-gray-600">{item.timeRange}</p>
+                  </div>
+                  <div className="flex items-center gap-4">
+                    <span className="font-bold text-indigo-600">
+                      Rp {item.price.toLocaleString()}
+                    </span>
+                    <button
+                      onClick={() => handleRemoveItem(index)}
+                      className="text-red-500 hover:text-red-700"
+                    >
+                      <FaTrash />
+                    </button>
+                  </div>
+                </div>
+              ))}
             </div>
-            <div className="flex items-center gap-2">
-              <MdOutlineHome /> <span>Indoor</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <TbTexture /> <span>Karpet dengan bahan vinyl</span>
-            </div>
-          </div>
-          <button
-            onClick={() => setAccordion(!accordion)}
-            className=" bg-red-800 p-4 text-white font-semibolds rounded-xl cursor-pointer"
-          >
-            6 Jadwal Tersedia <span>^</span>
-          </button>
-          {/* accordion akan terbuka jika cts button (6 jadwal tersedia diclick) */}
-          {accordion && (
-            <div className="bg-white w-full p-5 mt-3 flex gap-4 flex-wrap">
-              {/* 10:00 - 11:00 */}
-              <div className="p-3 border border-slate-900 w-32 h-24 flex justify-center items-center flex-col rounded-xl cursor-pointer">
-                <span className="text-xs">60 menit</span>
-                <h4 className="font-bold text-base">10:00 - 11:00</h4>
-                <span className="text-base font-semibold text-gray-600">
-                  Rp. 70.000
+
+            <div className="border-t pt-4">
+              <div className="flex justify-between items-center mb-4">
+                <span className="text-lg font-semibold">Total Price:</span>
+                <span className="text-2xl font-bold text-indigo-600">
+                  Rp {totalPrice.toLocaleString()}
                 </span>
               </div>
 
-              {/* 11:00 - 12:00 */}
-              <div className="p-3 cursor-not-allowed w-32 h-24 flex justify-center items-center flex-col rounded-xl">
-                <span className="text-xs">60 menit</span>
-                <h4 className="font-bold text-base">11:00 - 12:00</h4>
-                <span className="text-base font-semibold text-gray-600">
-                  Booked
-                </span>
-              </div>
-
-              {/* 12:00 - 13:00 */}
-              <div className="p-3 border border-slate-900 w-32 h-24 flex justify-center items-center flex-col rounded-xl cursor-pointer">
-                <span className="text-xs">60 menit</span>
-                <h4 className="font-bold text-base">12:00 - 13:00</h4>
-                <span className="text-base font-semibold text-gray-600">
-                  Rp. 70.000
-                </span>
-              </div>
-
-              {/* 13:00 - 14:00 */}
-              <div className="p-3 cursor-not-allowed w-32 h-24 flex justify-center items-center flex-col rounded-xl">
-                <span className="text-xs">60 menit</span>
-                <h4 className="font-bold text-base">13:00 - 14:00</h4>
-                <span className="text-base font-semibold text-gray-600">
-                  Booked
-                </span>
-              </div>
-
-              {/* 14:00 - 15:00 */}
-              <div className="p-3 border border-slate-900 w-32 h-24 flex justify-center items-center flex-col rounded-xl cursor-pointer">
-                <span className="text-xs">60 menit</span>
-                <h4 className="font-bold text-base">14:00 - 15:00</h4>
-                <span className="text-base font-semibold text-gray-600">
-                  Rp. 70.000
-                </span>
-              </div>
-
-              {/* 15:00 - 16:00 */}
-              <div className="p-3 cursor-not-allowed w-32 h-24 flex justify-center items-center flex-col rounded-xl">
-                <span className="text-xs">60 menit</span>
-                <h4 className="font-bold text-base">15:00 - 16:00</h4>
-                <span className="text-base font-semibold text-gray-600">
-                  Booked
-                </span>
-              </div>
-
-              {/* 16:00 - 17:00 */}
-              <div className="p-3 border border-slate-900 w-32 h-24 flex justify-center items-center flex-col rounded-xl cursor-pointer">
-                <span className="text-xs">60 menit</span>
-                <h4 className="font-bold text-base">16:00 - 17:00</h4>
-                <span className="text-base font-semibold text-gray-600">
-                  Rp. 70.000
-                </span>
-              </div>
-
-              {/* 17:00 - 18:00 */}
-              <div className="p-3 border border-slate-900 w-32 h-24 flex justify-center items-center flex-col rounded-xl cursor-pointer">
-                <span className="text-xs">60 menit</span>
-                <h4 className="font-bold text-base">17:00 - 18:00</h4>
-                <span className="text-base font-semibold text-gray-600">
-                  Rp. 70.000
-                </span>
-              </div>
-
-              {/* 18:00 - 19:00 */}
-              <div className="p-3 cursor-not-allowed w-32 h-24 flex justify-center items-center flex-col rounded-xl">
-                <span className="text-xs">60 menit</span>
-                <h4 className="font-bold text-base">18:00 - 19:00</h4>
-                <span className="text-base font-semibold text-gray-600">
-                  Booked
-                </span>
-              </div>
-
-              {/* 19:00 - 20:00 */}
-              <div className="p-3 border border-slate-900 w-32 h-24 flex justify-center items-center flex-col rounded-xl cursor-pointer">
-                <span className="text-xs">60 menit</span>
-                <h4 className="font-bold text-base">19:00 - 20:00</h4>
-                <span className="text-base font-semibold text-gray-600">
-                  Rp. 70.000
-                </span>
-              </div>
-
-              {/* 20:00 - 21:00 */}
-              <div className="p-3 border border-slate-900 w-32 h-24 flex justify-center items-center flex-col rounded-xl cursor-pointer">
-                <span className="text-xs">60 menit</span>
-                <h4 className="font-bold text-base">20:00 - 21:00</h4>
-                <span className="text-base font-semibold text-gray-600">
-                  Rp. 70.000
-                </span>
-              </div>
-
-              {/* 21:00 - 22:00 */}
-              <div className="p-3 cursor-not-allowed w-32 h-24 flex justify-center items-center flex-col rounded-xl">
-                <span className="text-xs">60 menit</span>
-                <h4 className="font-bold text-base">21:00 - 22:00</h4>
-                <span className="text-base font-semibold text-gray-600">
-                  Booked
-                </span>
-              </div>
-
-              {/* 22:00 - 23:00 */}
-              <div className="p-3 border border-slate-900 w-32 h-24 flex justify-center items-center flex-col rounded-xl cursor-pointer">
-                <span className="text-xs">60 menit</span>
-                <h4 className="font-bold text-base">22:00 - 23:00</h4>
-                <span className="text-base font-semibold text-gray-600">
-                  Rp. 70.000
-                </span>
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
-      {/* card lapangan 2 */}
-      <div className=" mt-10 grid grid-cols-6 gap-x-5">
-        <div className=" bg-amber-300 col-span-2">
-          <Image src="/next.svg" alt="a" width={200} height={240} />
-        </div>
-        <div className=" col-span-4 bg-amber-300 p-5 ">
-          <div>
-            <h2 className=" font-bold text-2xl">Lapangan 1</h2>
-            <div>lapangan dengan karpet flypower</div>
-          </div>
-          <div className="flex flex-col gap-2 text-gray-700">
-            <div className="flex items-center gap-2">
-              <GiShuttlecock /> <span>Badminton</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <MdOutlineHome /> <span>Indoor</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <TbTexture /> <span>Karpet dengan bahan vinyl</span>
+              <button
+                onClick={handleSubmitBooking}
+                disabled={loading}
+                className={`w-full py-4 rounded-xl text-white font-semibold text-lg transition-all ${
+                  loading
+                    ? "bg-gray-400 cursor-not-allowed"
+                    : "bg-indigo-600 hover:bg-indigo-700"
+                }`}
+              >
+                {loading ? "Processing..." : "Proceed to Payment"}
+              </button>
             </div>
           </div>
-          <button
-            onClick={() => setAccordion(!accordion)}
-            className=" bg-red-800 p-4 text-white font-semibolds rounded-xl cursor-pointer"
-          >
-            6 Jadwal Tersedia <span>^</span>
-          </button>
-          {/* accordion akan terbuka jika cts button (6 jadwal tersedia diclick) */}
-          {accordion && (
-            <div className="bg-white w-full p-5 mt-3 flex gap-4 flex-wrap">
-              {/* 10:00 - 11:00 */}
-              <div className="p-3 border border-slate-900 w-32 h-24 flex justify-center items-center flex-col rounded-xl cursor-pointer">
-                <span className="text-xs">60 menit</span>
-                <h4 className="font-bold text-base">10:00 - 11:00</h4>
-                <span className="text-base font-semibold text-gray-600">
-                  Rp. 70.000
-                </span>
-              </div>
+        )}
 
-              {/* 11:00 - 12:00 */}
-              <div className="p-3 cursor-not-allowed w-32 h-24 flex justify-center items-center flex-col rounded-xl">
-                <span className="text-xs">60 menit</span>
-                <h4 className="font-bold text-base">11:00 - 12:00</h4>
-                <span className="text-base font-semibold text-gray-600">
-                  Booked
-                </span>
-              </div>
-
-              {/* 12:00 - 13:00 */}
-              <div className="p-3 border border-slate-900 w-32 h-24 flex justify-center items-center flex-col rounded-xl cursor-pointer">
-                <span className="text-xs">60 menit</span>
-                <h4 className="font-bold text-base">12:00 - 13:00</h4>
-                <span className="text-base font-semibold text-gray-600">
-                  Rp. 70.000
-                </span>
-              </div>
-
-              {/* 13:00 - 14:00 */}
-              <div className="p-3 cursor-not-allowed w-32 h-24 flex justify-center items-center flex-col rounded-xl">
-                <span className="text-xs">60 menit</span>
-                <h4 className="font-bold text-base">13:00 - 14:00</h4>
-                <span className="text-base font-semibold text-gray-600">
-                  Booked
-                </span>
-              </div>
-
-              {/* 14:00 - 15:00 */}
-              <div className="p-3 border border-slate-900 w-32 h-24 flex justify-center items-center flex-col rounded-xl cursor-pointer">
-                <span className="text-xs">60 menit</span>
-                <h4 className="font-bold text-base">14:00 - 15:00</h4>
-                <span className="text-base font-semibold text-gray-600">
-                  Rp. 70.000
-                </span>
-              </div>
-
-              {/* 15:00 - 16:00 */}
-              <div className="p-3 cursor-not-allowed w-32 h-24 flex justify-center items-center flex-col rounded-xl">
-                <span className="text-xs">60 menit</span>
-                <h4 className="font-bold text-base">15:00 - 16:00</h4>
-                <span className="text-base font-semibold text-gray-600">
-                  Booked
-                </span>
-              </div>
-
-              {/* 16:00 - 17:00 */}
-              <div className="p-3 border border-slate-900 w-32 h-24 flex justify-center items-center flex-col rounded-xl cursor-pointer">
-                <span className="text-xs">60 menit</span>
-                <h4 className="font-bold text-base">16:00 - 17:00</h4>
-                <span className="text-base font-semibold text-gray-600">
-                  Rp. 70.000
-                </span>
-              </div>
-
-              {/* 17:00 - 18:00 */}
-              <div className="p-3 border border-slate-900 w-32 h-24 flex justify-center items-center flex-col rounded-xl cursor-pointer">
-                <span className="text-xs">60 menit</span>
-                <h4 className="font-bold text-base">17:00 - 18:00</h4>
-                <span className="text-base font-semibold text-gray-600">
-                  Rp. 70.000
-                </span>
-              </div>
-
-              {/* 18:00 - 19:00 */}
-              <div className="p-3 cursor-not-allowed w-32 h-24 flex justify-center items-center flex-col rounded-xl">
-                <span className="text-xs">60 menit</span>
-                <h4 className="font-bold text-base">18:00 - 19:00</h4>
-                <span className="text-base font-semibold text-gray-600">
-                  Booked
-                </span>
-              </div>
-
-              {/* 19:00 - 20:00 */}
-              <div className="p-3 border border-slate-900 w-32 h-24 flex justify-center items-center flex-col rounded-xl cursor-pointer">
-                <span className="text-xs">60 menit</span>
-                <h4 className="font-bold text-base">19:00 - 20:00</h4>
-                <span className="text-base font-semibold text-gray-600">
-                  Rp. 70.000
-                </span>
-              </div>
-
-              {/* 20:00 - 21:00 */}
-              <div className="p-3 border border-slate-900 w-32 h-24 flex justify-center items-center flex-col rounded-xl cursor-pointer">
-                <span className="text-xs">60 menit</span>
-                <h4 className="font-bold text-base">20:00 - 21:00</h4>
-                <span className="text-base font-semibold text-gray-600">
-                  Rp. 70.000
-                </span>
-              </div>
-
-              {/* 21:00 - 22:00 */}
-              <div className="p-3 cursor-not-allowed w-32 h-24 flex justify-center items-center flex-col rounded-xl">
-                <span className="text-xs">60 menit</span>
-                <h4 className="font-bold text-base">21:00 - 22:00</h4>
-                <span className="text-base font-semibold text-gray-600">
-                  Booked
-                </span>
-              </div>
-
-              {/* 22:00 - 23:00 */}
-              <div className="p-3 border border-slate-900 w-32 h-24 flex justify-center items-center flex-col rounded-xl cursor-pointer">
-                <span className="text-xs">60 menit</span>
-                <h4 className="font-bold text-base">22:00 - 23:00</h4>
-                <span className="text-base font-semibold text-gray-600">
-                  Rp. 70.000
-                </span>
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
-      {/* card lapangan 3 */}
-      <div className=" mt-10 grid grid-cols-6 gap-x-5">
-        <div className=" bg-amber-300 col-span-2">
-          <Image src="/next.svg" alt="a" width={200} height={240} />
-        </div>
-        <div className=" col-span-4 bg-amber-300 p-5 ">
-          <div>
-            <h2 className=" font-bold text-2xl">Lapangan 1</h2>
-            <div>lapangan dengan karpet flypower</div>
+        {/* Empty state */}
+        {!selectedDate && (
+          <div className="text-center py-12 text-gray-500">
+            <p className="text-lg">Please select a date to start booking</p>
           </div>
-          <div className="flex flex-col gap-2 text-gray-700">
-            <div className="flex items-center gap-2">
-              <GiShuttlecock /> <span>Badminton</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <MdOutlineHome /> <span>Indoor</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <TbTexture /> <span>Karpet dengan bahan vinyl</span>
-            </div>
-          </div>
-          <button
-            onClick={() => setAccordion(!accordion)}
-            className=" bg-red-800 p-4 text-white font-semibolds rounded-xl cursor-pointer"
-          >
-            6 Jadwal Tersedia <span>^</span>
-          </button>
-          {/* accordion akan terbuka jika cts button (6 jadwal tersedia diclick) */}
-          {accordion && (
-            <div className="bg-white w-full p-5 mt-3 flex gap-4 flex-wrap">
-              {/* 10:00 - 11:00 */}
-              <div className="p-3 border border-slate-900 w-32 h-24 flex justify-center items-center flex-col rounded-xl cursor-pointer">
-                <span className="text-xs">60 menit</span>
-                <h4 className="font-bold text-base">10:00 - 11:00</h4>
-                <span className="text-base font-semibold text-gray-600">
-                  Rp. 70.000
-                </span>
-              </div>
-
-              {/* 11:00 - 12:00 */}
-              <div className="p-3 cursor-not-allowed w-32 h-24 flex justify-center items-center flex-col rounded-xl">
-                <span className="text-xs">60 menit</span>
-                <h4 className="font-bold text-base">11:00 - 12:00</h4>
-                <span className="text-base font-semibold text-gray-600">
-                  Booked
-                </span>
-              </div>
-
-              {/* 12:00 - 13:00 */}
-              <div className="p-3 border border-slate-900 w-32 h-24 flex justify-center items-center flex-col rounded-xl cursor-pointer">
-                <span className="text-xs">60 menit</span>
-                <h4 className="font-bold text-base">12:00 - 13:00</h4>
-                <span className="text-base font-semibold text-gray-600">
-                  Rp. 70.000
-                </span>
-              </div>
-
-              {/* 13:00 - 14:00 */}
-              <div className="p-3 cursor-not-allowed w-32 h-24 flex justify-center items-center flex-col rounded-xl">
-                <span className="text-xs">60 menit</span>
-                <h4 className="font-bold text-base">13:00 - 14:00</h4>
-                <span className="text-base font-semibold text-gray-600">
-                  Booked
-                </span>
-              </div>
-
-              {/* 14:00 - 15:00 */}
-              <div className="p-3 border border-slate-900 w-32 h-24 flex justify-center items-center flex-col rounded-xl cursor-pointer">
-                <span className="text-xs">60 menit</span>
-                <h4 className="font-bold text-base">14:00 - 15:00</h4>
-                <span className="text-base font-semibold text-gray-600">
-                  Rp. 70.000
-                </span>
-              </div>
-
-              {/* 15:00 - 16:00 */}
-              <div className="p-3 cursor-not-allowed w-32 h-24 flex justify-center items-center flex-col rounded-xl">
-                <span className="text-xs">60 menit</span>
-                <h4 className="font-bold text-base">15:00 - 16:00</h4>
-                <span className="text-base font-semibold text-gray-600">
-                  Booked
-                </span>
-              </div>
-
-              {/* 16:00 - 17:00 */}
-              <div className="p-3 border border-slate-900 w-32 h-24 flex justify-center items-center flex-col rounded-xl cursor-pointer">
-                <span className="text-xs">60 menit</span>
-                <h4 className="font-bold text-base">16:00 - 17:00</h4>
-                <span className="text-base font-semibold text-gray-600">
-                  Rp. 70.000
-                </span>
-              </div>
-
-              {/* 17:00 - 18:00 */}
-              <div className="p-3 border border-slate-900 w-32 h-24 flex justify-center items-center flex-col rounded-xl cursor-pointer">
-                <span className="text-xs">60 menit</span>
-                <h4 className="font-bold text-base">17:00 - 18:00</h4>
-                <span className="text-base font-semibold text-gray-600">
-                  Rp. 70.000
-                </span>
-              </div>
-
-              {/* 18:00 - 19:00 */}
-              <div className="p-3 cursor-not-allowed w-32 h-24 flex justify-center items-center flex-col rounded-xl">
-                <span className="text-xs">60 menit</span>
-                <h4 className="font-bold text-base">18:00 - 19:00</h4>
-                <span className="text-base font-semibold text-gray-600">
-                  Booked
-                </span>
-              </div>
-
-              {/* 19:00 - 20:00 */}
-              <div className="p-3 border border-slate-900 w-32 h-24 flex justify-center items-center flex-col rounded-xl cursor-pointer">
-                <span className="text-xs">60 menit</span>
-                <h4 className="font-bold text-base">19:00 - 20:00</h4>
-                <span className="text-base font-semibold text-gray-600">
-                  Rp. 70.000
-                </span>
-              </div>
-
-              {/* 20:00 - 21:00 */}
-              <div className="p-3 border border-slate-900 w-32 h-24 flex justify-center items-center flex-col rounded-xl cursor-pointer">
-                <span className="text-xs">60 menit</span>
-                <h4 className="font-bold text-base">20:00 - 21:00</h4>
-                <span className="text-base font-semibold text-gray-600">
-                  Rp. 70.000
-                </span>
-              </div>
-
-              {/* 21:00 - 22:00 */}
-              <div className="p-3 cursor-not-allowed w-32 h-24 flex justify-center items-center flex-col rounded-xl">
-                <span className="text-xs">60 menit</span>
-                <h4 className="font-bold text-base">21:00 - 22:00</h4>
-                <span className="text-base font-semibold text-gray-600">
-                  Booked
-                </span>
-              </div>
-
-              {/* 22:00 - 23:00 */}
-              <div className="p-3 border border-slate-900 w-32 h-24 flex justify-center items-center flex-col rounded-xl cursor-pointer">
-                <span className="text-xs">60 menit</span>
-                <h4 className="font-bold text-base">22:00 - 23:00</h4>
-                <span className="text-base font-semibold text-gray-600">
-                  Rp. 70.000
-                </span>
-              </div>
-            </div>
-          )}
-        </div>
+        )}
       </div>
     </div>
   );
 };
 
-export default Booking;
+export default BookingPage;
