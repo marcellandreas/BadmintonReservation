@@ -5,7 +5,6 @@ import connectDB from "./config/mongodb.js";
 import { clerkMiddleware } from "@clerk/express";
 import clerkWebhooks from "./controller/ClerkWebHooks.js";
 
-
 import userRouter from "./routes/userRoute.js";
 // import courtRouter from "./routes/courtRoute.js";
 // import timeSlotRouter from "./routes/timeSlotRoute.js";
@@ -19,12 +18,10 @@ app.use(cors());
 
 // middleware setup
 app.use(express.json());
-
-// clrek
 app.use(clerkMiddleware());
 
 // api to listen clerk webhooks
-app.post("/api/clerk", clerkWebhooks);
+app.use("/api/clerk", clerkWebhooks);
 
 // Routes
 app.get("/", (req, res) => res.send("API Successfully Connected"));
@@ -37,4 +34,6 @@ app.use("/api/user", userRouter);
 // app.use("/api/bookings", bookingRouter);
 
 // Start server
-app.listen(port, () => console.log(`🚀 Server running at http://localhost:${port}`));
+app.listen(port, () =>
+  console.log(`🚀 Server running at http://localhost:${port}`)
+);
