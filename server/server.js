@@ -3,35 +3,34 @@ import cors from "cors";
 import "dotenv/config";
 import connectDB from "./config/mongodb.js";
 import { clerkMiddleware } from "@clerk/express";
+
+// import router
+import userRouter from "./routes/userRoute.js";
 import clerkWebhooks from "./controller/ClerkWebHooks.js";
 
-import userRouter from "./routes/userRoute.js";
+const port = process.env.PORT || 3000;
 
-const port = process.env.PORT || 5000;
 await connectDB();
 
 const app = express();
 app.use(cors());
 
-// PENTING: Webhook route HARUS sebelum express.json()
-// Dan pakai express.raw() untuk preserve raw body
-app.post(
-  "/api/clerk",
-  express.raw({ type: "application/json" }),
-  clerkWebhooks
-);
-
-// Middleware setup (SETELAH webhook route)
+// middleware setup
 app.use(express.json());
+
+// clrek
 app.use(clerkMiddleware());
 
-// Routes
-app.get("/", (req, res) => res.send("API Successfully Connected"));
+// api to listen clerk webhooks
+app.post("/api/clerk", clerkWebhooks);
+
+// route endpoint
+app.get("/", (req, res) => res.send("Api Successfully Connected"));
 
 // define api routes
 app.use("/api/user", userRouter);
 
-// Start server
+// start
 app.listen(port, () =>
-  console.log(`🚀 Server running at http://localhost:${port}`)
+  console.log(`Server is running at http://localhost:${port}`)
 );
