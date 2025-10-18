@@ -34,3 +34,5 @@ app.use("/api/user", userRouter);
 app.listen(port, () =>
   console.log(`Server is running at http://localhost:${port}`)
 );
+
+console.log(Math.floor(Date.now() / 1000), "berapa");
