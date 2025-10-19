@@ -3,105 +3,118 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { UserButton } from "@clerk/nextjs";
-import { assets } from "@/assets/data";
 import { useAppContext } from "@/context/AppContext";
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
+import {
+  FaChartLine,
+  FaCalendarCheck,
+  FaBuilding,
+  FaClock,
+} from "react-icons/fa";
 
 const SideBar = ({ children }) => {
   const { isOwner, user } = useAppContext();
   const pathname = usePathname();
+  const router = useRouter();
 
   const navItems = [
     {
       path: "/dashboard",
       label: "Dashboard",
-      icon: assets.dashboard,
+      icon: FaChartLine,
     },
     {
-      path: "/dashboard/add-product",
-      label: "Add Product",
-      icon: assets.squarePlus,
+      path: "/dashboard/bookings",
+      label: "Bookings",
+      icon: FaCalendarCheck,
     },
     {
-      path: "/dashboard/list-product",
-      label: "List Product",
-      icon: assets.list,
+      path: "/dashboard/courts",
+      label: "Courts",
+      icon: FaBuilding,
+    },
+    {
+      path: "/dashboard/timeslots",
+      label: "Time Slots",
+      icon: FaClock,
     },
   ];
 
   useEffect(() => {
-    if (!isOwner) {
-      navigate("/");
+    if (user && !isOwner) {
+      router.push("/");
     }
-  }, [isOwner]);
+  }, [isOwner, user, router]);
+
+  if (!user || !isOwner) {
+    return null;
+  }
 
   return (
-    <div className="mx-auto max-w-[1440px] flex flex-col md:flex-row bg-white min-h-screen">
-      {/* sidebar */}
-      <div className="max-md:flexCenter flex flex-col justify-between bg-primary sm:m-3 md:min-w-[20%] md:min-h-[97vh] shadow rounded-xl">
-        <div className="flex flex-col gap-y-6 max-md:items-center md:flex-col md:pt-5">
-          <div className="w-full flex justify-between md:flex-col">
-            {/* logo */}
-            <div className="flex flex-1 p-3 lg:pl-12">
-              <Link href="/" className="flex items-end">
-                <img src={assets.logoImg} alt="Logo Image" className="h-12" />
-                <div>
-                  <span className="hidden sm:block font-extrabold text-3xl relative top-1 left-1">
-                    Badminton
-                  </span>
-                  <span className="hidden sm:block font-extrabold text-xs relative left-1.5 tracking-[10px] uppercase text-solid">
-                    Reservation
-                  </span>
-                </div>
-              </Link>
-            </div>
-
-            {/* user mobile */}
-            <div className="md:hidden flex items-center gap-3 md:bg-primary rounded-b-xl p-2 pl-5 lg:pl-10 md:mt-10">
-              <UserButton
-                appearance={{
-                  elements: {
-                    userButtonAvatarBox: {
-                      width: "42px",
-                      height: "42px",
-                    },
-                  },
-                }}
-              />
-              <div className="text-sm font-semibold text-gray-800 capitalize">
-                {user?.firstName} {user?.lastName}
+    <div className="flex flex-col md:flex-row bg-gray-50 min-h-screen">
+      {/* Sidebar */}
+      <div className="flex flex-col justify-between bg-white md:min-w-[260px] md:min-h-screen shadow-lg">
+        <div className="flex flex-col">
+          {/* Logo */}
+          <div className="p-6 border-b border-gray-200">
+            <Link href="/dashboard" className="flex items-center gap-2">
+              <div className="w-10 h-10 bg-red-500 rounded-lg flex items-center justify-center">
+                <span className="text-white font-bold text-xl">B</span>
               </div>
+              <div>
+                <span className="block font-extrabold text-xl text-gray-800">
+                  Badminton
+                </span>
+                <span className="block text-xs text-gray-500 uppercase tracking-wider">
+                  Admin Panel
+                </span>
+              </div>
+            </Link>
+          </div>
+
+          {/* User Mobile */}
+          <div className="md:hidden flex items-center gap-3 p-4 border-b border-gray-200">
+            <UserButton
+              appearance={{
+                elements: {
+                  userButtonAvatarBox: {
+                    width: "42px",
+                    height: "42px",
+                  },
+                },
+              }}
+            />
+            <div className="text-sm font-semibold text-gray-800 capitalize">
+              {user?.firstName} {user?.lastName}
             </div>
           </div>
 
-          {/* navigation */}
-          <div className="flex md:flex-col md:gap-x-5 gap-y-8 md:mt-4">
+          {/* Navigation */}
+          <div className="flex md:flex-col p-3 gap-2">
             {navItems.map((link) => {
               const isActive = pathname === link.path;
+              const Icon = link.icon;
               return (
                 <Link
                   key={link.path}
                   href={link.path}
-                  className={`flex items-center gap-x-2 p-5 lg:pl-12 text-[13px] font-bold sm:!text-sm cursor-pointer h-10 transition-all ${
+                  className={`flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-semibold transition-all ${
                     isActive
-                      ? "bg-solid/10 border-r-4 border-solidOne rounded-none"
-                      : "rounded-xl hover:bg-gray-100"
+                      ? "bg-red-500 text-white shadow-md"
+                      : "text-gray-700 hover:bg-gray-100"
                   }`}
                 >
-                  <img
-                    src={link.icon}
-                    alt={link.label}
-                    className="hidden md:block"
-                    width={18}
-                  />
-                  <div>{link.label}</div>
+                  <Icon className="text-lg" />
+                  <span className="hidden md:block">{link.label}</span>
                 </Link>
               );
             })}
           </div>
         </div>
 
-        {/* user desktop */}
-        <div className="hidden md:flex items-center gap-3 md:bg-primary rounded-b-xl p-2 md:mt-10 border-t border-slate-900/15 justify-center">
+        {/* User Desktop */}
+        <div className="hidden md:flex items-center gap-3 p-4 border-t border-gray-200">
           <UserButton
             appearance={{
               elements: {
@@ -112,14 +125,17 @@ const SideBar = ({ children }) => {
               },
             }}
           />
-          <div className="text-sm font-semibold text-gray-800 capitalize">
-            {user?.firstName} {user?.lastName}
+          <div className="flex-1 min-w-0">
+            <div className="text-sm font-semibold text-gray-800 capitalize truncate">
+              {user?.firstName} {user?.lastName}
+            </div>
+            <div className="text-xs text-gray-500 truncate">{user?.email}</div>
           </div>
         </div>
       </div>
 
-      {/* main content */}
-      <div className="flex-1">{children}</div>
+      {/* Main Content */}
+      <div className="flex-1 overflow-auto">{children}</div>
     </div>
   );
 };
