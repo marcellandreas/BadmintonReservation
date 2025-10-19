@@ -34,7 +34,7 @@ app.get("/", (req, res) => res.send("Api Successfully Connected"));
 app.use("/api/user", userRouter);
 app.use("/api/booking", bookingRouter);
 app.use("/api/court", courtRouter);
-app.use("api/timeslot", timeSlotRouter);
+app.use("/api/timeslot", timeSlotRouter);
 
 // start
 app.listen(port, () =>

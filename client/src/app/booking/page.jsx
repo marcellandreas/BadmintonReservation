@@ -134,7 +134,12 @@ const BookingPage = () => {
         notes: "",
       };
 
+      console.log(bookingData, "data");
+
       const token = await getToken();
+      console.log("Booking Data Sent:", JSON.stringify(bookingData, null, 2));
+      console.log("Token", token);
+
       const response = await axios.post("/api/booking", bookingData, {
         headers: {
           Authorization: `Bearer ${token}`,
