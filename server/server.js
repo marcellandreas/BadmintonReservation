@@ -9,8 +9,9 @@ import userRouter from "./routes/userRoute.js";
 import clerkWebhooks from "./controller/ClerkWebHooks.js";
 import bookingRouter from "./routes/bookingRoute.js";
 import courtRouter from "./routes/courtRoute.js";
+import timeSlotRouter from "./routes/timeSlotRoute.js";
 
-const port = process.env.PORT || 3000;
+const port = process.env.PORT || 5000;
 
 await connectDB();
 
@@ -33,6 +34,7 @@ app.get("/", (req, res) => res.send("Api Successfully Connected"));
 app.use("/api/user", userRouter);
 app.use("/api/booking", bookingRouter);
 app.use("/api/court", courtRouter);
+app.use("api/timeslot", timeSlotRouter);
 
 // start
 app.listen(port, () =>

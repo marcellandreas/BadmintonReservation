@@ -1,7 +1,6 @@
-
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import {ClerkProvider} from '@clerk/nextjs'
+import { ClerkProvider } from "@clerk/nextjs";
 import Header from "@/components/navigation/Header";
 import Footer from "@/components/navigation/Footer";
 import { AppContextProvider } from "@/context/AppContext";
@@ -25,20 +24,22 @@ export default function RootLayout({ children }) {
   const PUBLISHABLE_KEY = process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY;
 
   if (!PUBLISHABLE_KEY) {
-  throw new Error("Missing Publishable Key");
+    throw new Error("Missing Publishable Key");
   }
-  
+
   return (
-    <ClerkProvider publishableKey={PUBLISHABLE_KEY}>
-      <AppContextProvider>
-        <html lang="en">
-          <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+    <html lang="en">
+      <ClerkProvider publishableKey={PUBLISHABLE_KEY}>
+        <AppContextProvider>
+          <body
+            className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+          >
             <Header />
             {children}
             <Footer />
           </body>
-        </html>
-      </AppContextProvider>
-    </ClerkProvider>
+        </AppContextProvider>
+      </ClerkProvider>
+    </html>
   );
 }

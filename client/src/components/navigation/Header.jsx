@@ -8,6 +8,7 @@ import {
 } from '@clerk/nextjs'
 import { useAppContext } from "@/context/AppContext";
 import Image from "next/image";
+import Link from "next/link";
 
 const Header = () => {
   const [open, setOpen] = useState(false);
@@ -54,10 +55,10 @@ const Header = () => {
 
       {/* Desktop Menu */}
       <div className="hidden sm:flex items-center gap-8">
-        <a href="#">Home</a>
-        <a href="#">Booking</a>
-        <a href="#">About</a>
-        <a href="#">Contact</a>
+        <Link href="/">Home</Link>
+        <Link href="/booking">Booking</Link>
+        <Link href="/about">About</Link>
+        <Link href="/contact">Contact</Link>
          {/* user profile */}
           <div>
             {user ? (
