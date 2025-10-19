@@ -22,12 +22,16 @@ const BookingItemSchema = new mongoose.Schema(
 
 const BookingSchema = new mongoose.Schema(
   {
-    user: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "User",
-      required: true,
-      index: true,
-    },
+    // user: {
+    //   type: mongoose.Schema.Types.ObjectId,
+    //   ref: "User",
+    //   required: true,
+    //   index: true,
+    // },
+     user: {
+    type: String, // sebelumnya ObjectId
+    required: true,
+  },
     bookingDate: {
       type: Date,
       required: true,

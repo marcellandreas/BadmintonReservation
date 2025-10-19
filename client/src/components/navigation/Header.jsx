@@ -2,10 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import Logo from "./Logo";
-import {
-  UserButton, 
-  useClerk
-} from '@clerk/nextjs'
+import { UserButton, useClerk } from "@clerk/nextjs";
 import { useAppContext } from "@/context/AppContext";
 import Image from "next/image";
 import Link from "next/link";
@@ -13,10 +10,10 @@ import Link from "next/link";
 const Header = () => {
   const [open, setOpen] = useState(false);
 
-  const {openSignIn} = useClerk();
-  const { user, getToken, isOwner} = useAppContext();
+  const { openSignIn } = useClerk();
+  const { user, getToken, isOwner } = useAppContext();
 
-    const OrderIcon = () => {
+  const OrderIcon = () => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -37,7 +34,7 @@ const Header = () => {
     );
   };
 
-   useEffect(() => {
+  useEffect(() => {
     const handleResize = () => {
       if (window.innerWidth >= 1024) {
         setOpen(false);
@@ -50,86 +47,117 @@ const Header = () => {
   }, []);
 
   return (
-    <nav className="flex items-center justify-between px-6 md:px-16 lg:px-24 xl:px-32 py-4 border-b border-gray-300 bg-white relative transition-all">
-      <Logo />
-
-      {/* Desktop Menu */}
-      <div className="hidden sm:flex items-center gap-8">
-        <Link href="/">Home</Link>
-        <Link href="/booking">Booking</Link>
-        <Link href="/about">About</Link>
-        <Link href="/contact">Contact</Link>
-         {/* user profile */}
-          <div>
-            {user ? (
-              <UserButton
-                appearance={{
-                  elements: {
-                    userButtonAvatarBox: {
-                      width: "42px",
-                      height: "42px",
-                    },
-                  },
-                }}
-              >
-                <UserButton.MenuItems>
-                  <UserButton.Action
-                    label="My Orders"
-                    labelIcon={<OrderIcon />}
-                  />
-                </UserButton.MenuItems>
-              </UserButton>
-            ) : (
-              <button
-                onClick={openSignIn}
-                className=" btn-solid flex items-center justify-center cursor-pointer gap-2"
-              >
-                Login
-                <Image src="/next.svg" alt="" className=" invert w-5" width={5} height={5} />
-              </button>
-            )}
-          </div>
+    <nav
+      className={`flex items-center justify-between px-6 md:px-16 lg:px-24 xl:px-32 py-4 bg-black text-white fixed top-0 left-0 w-full z-50 transition-all duration-300 shadow-md`}
+    >
+      {/* Logo */}
+      <div className="flex items-center gap-2">
+        <Logo />
       </div>
 
+      {/* Desktop Menu */}
+      <div className="hidden sm:flex items-center gap-8 font-medium">
+        <Link href="/" className="hover:text-red-600 transition-colors">
+          Home
+        </Link>
+        <Link href="/booking" className="hover:text-red-600 transition-colors">
+          Booking
+        </Link>
+        <Link href="/about" className="hover:text-red-600 transition-colors">
+          About
+        </Link>
+        <Link href="/contact" className="hover:text-red-600 transition-colors">
+          Contact
+        </Link>
+
+        {/* User Section */}
+        <div className="flex gap-x-2 justify-center items-center">
+          <div>
+            {isOwner && (
+              <Link
+                href="/dashboard"
+                className="btn-light ring-1 ring-slate-900/5 py-1 text-xs font-semibold"
+              >
+                Dashboard
+              </Link>
+            )}
+          </div>
+          {user ? (
+            <UserButton
+              appearance={{
+                elements: {
+                  userButtonAvatarBox: {
+                    width: "40px",
+                    height: "40px",
+                  },
+                },
+              }}
+            >
+              <UserButton.MenuItems>
+                <UserButton.Action
+                  label="My Booking"
+                  labelIcon={<OrderIcon />}
+                  onClick={() => (window.location.href = "/my-booking")}
+                />
+              </UserButton.MenuItems>
+            </UserButton>
+          ) : (
+            <button
+              onClick={openSignIn}
+              className="bg-red-600 hover:bg-red-700 text-white px-5 py-2 rounded-md font-semibold transition"
+            >
+              Login
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* Mobile Toggle Button */}
       <button
-        onClick={() => (open ? setOpen(false) : setOpen(true))}
+        onClick={() => setOpen(!open)}
         aria-label="Menu"
         className="sm:hidden"
       >
-        {/* Menu Icon SVG */}
         <svg
-          width="21"
-          height="15"
-          viewBox="0 0 21 15"
+          width="24"
+          height="18"
+          viewBox="0 0 24 18"
           fill="none"
           xmlns="http://www.w3.org/2000/svg"
         >
-          <rect width="21" height="1.5" rx=".75" fill="#426287" />
-          <rect x="8" y="6" width="13" height="1.5" rx=".75" fill="#426287" />
-          <rect x="6" y="13" width="15" height="1.5" rx=".75" fill="#426287" />
+          <rect width="24" height="2" rx="1" fill="white" />
+          <rect y="8" width="24" height="2" rx="1" fill="white" />
+          <rect y="16" width="24" height="2" rx="1" fill="white" />
         </svg>
       </button>
-
-      
 
       {/* Mobile Menu */}
       <div
         className={`${
           open ? "flex" : "hidden"
-        } absolute top-[60px] left-0 w-full bg-white shadow-md py-4 flex-col items-start gap-2 px-5 text-sm md:hidden`}
+        } absolute top-[60px] left-0 w-full bg-black text-white flex-col items-start gap-4 px-6 py-5 border-t border-neutral-800 md:hidden transition-all`}
       >
-        <a href="#" className="block">
+        <Link href="/" className="hover:text-red-600 transition">
           Home
-        </a>
-        <a href="#" className="block">
+        </Link>
+        <Link href="/booking" className="hover:text-red-600 transition">
+          Booking
+        </Link>
+        <Link href="/about" className="hover:text-red-600 transition">
           About
-        </a>
-        <a href="#" className="block">
+        </Link>
+        <Link href="/contact" className="hover:text-red-600 transition">
           Contact
-        </a>
-        <button className="cursor-pointer px-6 py-2 mt-2 bg-indigo-500 hover:bg-indigo-600 transition text-white rounded-full text-sm">
-          Login
-        </button>
+        </Link>
+
+        {!user && (
+          <button
+            onClick={openSignIn}
+            className="w-full text-center mt-3 bg-red-600 hover:bg-red-700 text-white py-2 rounded-md font-semibold transition"
+          >
+            Login
+          </button>
+        )}
       </div>
     </nav>
   );

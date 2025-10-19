@@ -165,204 +165,222 @@ const BookingPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
+    <div className="min-h-screen bg-gray-900 py-8 text-white">
       <div className="container mx-auto px-4">
-        <h1 className="text-3xl font-bold mb-8">Book Your Court</h1>
+        <h1 className="text-3xl font-bold mb-8 text-center text-slate-600">
+          Book Your Court
+        </h1>
 
-        {/* Step 1: Select Date */}
-        <div className="bg-white rounded-2xl shadow-md p-6 mb-8">
-          <h2 className="text-xl font-semibold mb-4">Step 1: Select Date</h2>
-          <div className="flex gap-4 overflow-x-auto pb-4">
-            {days.map((date, index) => {
-              const dateValue = toDateValue(date);
-              const isSelected = selectedDate === dateValue;
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {/* LEFT SIDE: Booking steps */}
+          <div className="lg:col-span-2 space-y-8">
+            {/* Step 1: Select Date */}
+            <div className="bg-gray-800 rounded-2xl shadow-md p-6">
+              <h2 className="text-xl font-semibold mb-4 text-slate-300">
+                Step 1: Select Date
+              </h2>
+              <div className="flex gap-4 overflow-x-auto pb-4 pt-5">
+                {days.map((date, index) => {
+                  const dateValue = toDateValue(date);
+                  const isSelected = selectedDate === dateValue;
 
-              return (
-                <div
-                  key={index}
-                  onClick={() => setSelectedDate(dateValue)}
-                  className={`min-w-[100px] text-center border-2 rounded-xl p-4 cursor-pointer transition-all ${
-                    isSelected
-                      ? "border-indigo-500 bg-indigo-50 scale-105"
-                      : "border-gray-300 bg-white hover:border-indigo-300"
-                  }`}
-                >
-                  <h5 className="text-sm font-semibold text-gray-700 capitalize">
-                    {formatDay(date)}
-                  </h5>
-                  <span className="text-xs text-gray-600">
-                    {formatDate(date)}
-                  </span>
-                </div>
-              );
-            })}
-          </div>
+                  return (
+                    <div
+                      key={index}
+                      onClick={() => setSelectedDate(dateValue)}
+                      className={`min-w-[100px] text-center border-2 rounded-xl p-4 cursor-pointer transition-all ${
+                        isSelected
+                          ? "border-white bg-gray-700 scale-105"
+                          : "border-gray-700 bg-gray-800 hover:border-white"
+                      }`}
+                    >
+                      <h5 className="text-sm font-semibold text-white capitalize">
+                        {formatDay(date)}
+                      </h5>
+                      <span className="text-xs text-white">
+                        {formatDate(date)}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
 
-          {/* Custom date picker */}
-          <div className="mt-4 flex items-center gap-4">
-            <span className="text-gray-600">Or select custom date:</span>
-            <input
-              type="date"
-              className="border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-              min={toDateValue(new Date())}
-              max={(() => {
-                const d = new Date();
-                d.setMonth(d.getMonth() + 3);
-                return toDateValue(d);
-              })()}
-              onChange={(e) => setSelectedDate(e.target.value)}
-              value={selectedDate || ""}
-            />
-          </div>
-        </div>
+              {/* Custom date picker */}
+              <div className="mt-4 flex items-center gap-4">
+                <span className="text-white">Or select custom date:</span>
+                <input
+                  type="date"
+                  className="border border-gray-700 rounded-lg px-4 py-2 bg-gray-800 text-white focus:outline-none focus:ring-2 focus:ring-red-600"
+                  min={toDateValue(new Date())}
+                  max={(() => {
+                    const d = new Date();
+                    d.setMonth(d.getMonth() + 3);
+                    return toDateValue(d);
+                  })()}
+                  onChange={(e) => setSelectedDate(e.target.value)}
+                  value={selectedDate || ""}
+                />
+              </div>
+            </div>
 
-        {/* Step 2: Select Courts & Timeslots */}
-        {selectedDate && (
-          <div className="bg-white rounded-2xl shadow-md p-6 mb-8">
-            <h2 className="text-xl font-semibold mb-4">
-              Step 2: Select Courts & Timeslots
-            </h2>
+            {/* Step 2: Select Courts & Timeslots */}
+            {selectedDate && (
+              <div className="bg-gray-800 rounded-2xl shadow-md p-6">
+                <h2 className="text-xl font-semibold mb-4 text-slate-300">
+                  Step 2: Select Courts & Timeslots
+                </h2>
 
-            {loading ? (
-              <div className="text-center py-8">Loading...</div>
-            ) : (
-              <div className="space-y-8">
-                {courts.map((court) => (
-                  <div key={court._id} className="border rounded-xl p-6">
-                    <div className="flex gap-6 mb-4">
-                      <img
-                        src={court.image}
-                        alt={court.name}
-                        className="w-32 h-32 object-cover rounded-lg"
-                      />
-                      <div className="flex-1">
-                        <h3 className="text-2xl font-bold mb-2">
-                          {court.name}
-                        </h3>
-                        <p className="text-gray-600 mb-3">
-                          {court.description}
-                        </p>
-                        <div className="flex flex-col gap-2 text-gray-700 text-sm">
-                          <div className="flex items-center gap-2">
-                            <GiShuttlecock /> <span>Badminton</span>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <MdOutlineHome /> <span>{court.courtType}</span>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <TbTexture /> <span>{court.surfaceType}</span>
+                {loading ? (
+                  <div className="text-center py-8 text-white">Loading...</div>
+                ) : (
+                  <div className="space-y-8">
+                    {courts.map((court) => (
+                      <div
+                        key={court._id}
+                        className="border border-gray-700 rounded-xl p-6"
+                      >
+                        <div className="flex gap-6 mb-4">
+                          <img
+                            src={court.image}
+                            alt={court.name}
+                            className="w-32 h-32 object-cover rounded-lg"
+                          />
+                          <div className="flex-1">
+                            <h3 className="text-2xl font-bold mb-2 text-slate-300">
+                              {court.name}
+                            </h3>
+                            <p className="text-white mb-3">
+                              {court.description}
+                            </p>
+                            <div className="flex flex-col gap-2 text-white text-sm">
+                              <div className="flex items-center gap-2">
+                                <GiShuttlecock /> <span>Badminton</span>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <MdOutlineHome /> <span>{court.courtType}</span>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <TbTexture /> <span>{court.surfaceType}</span>
+                              </div>
+                            </div>
                           </div>
                         </div>
+
+                        {/* Timeslots */}
+                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
+                          {timeSlots.map((slot) => {
+                            const isSelected = isItemSelected(
+                              court._id,
+                              slot._id
+                            );
+                            const isBooked = slot.availableCourts === 0;
+
+                            return (
+                              <button
+                                key={slot._id}
+                                onClick={() => handleAddItem(court, slot)}
+                                disabled={isBooked || isSelected}
+                                className={`p-3 border-2 rounded-xl flex flex-col items-center justify-center transition-all text-sm ${
+                                  isSelected
+                                    ? "border-green-500 bg-green-700 text-white cursor-not-allowed"
+                                    : isBooked
+                                    ? "border-gray-700 bg-gray-700 cursor-not-allowed opacity-50 text-white"
+                                    : "border-white bg-gray-800 hover:bg-gray-700 text-white cursor-pointer"
+                                }`}
+                              >
+                                <span>{slot.duration} min</span>
+                                <span className="font-bold">
+                                  {slot.startTime} - {slot.endTime}
+                                </span>
+                                <span className="font-semibold text-white">
+                                  {isBooked
+                                    ? "Booked"
+                                    : `Rp ${slot.price.toLocaleString()}`}
+                                </span>
+                                {isSelected && (
+                                  <span className="text-green-500 mt-1">
+                                    ✓ Added
+                                  </span>
+                                )}
+                              </button>
+                            );
+                          })}
+                        </div>
                       </div>
-                    </div>
-
-                    {/* Timeslots */}
-                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
-                      {timeSlots.map((slot) => {
-                        const isSelected = isItemSelected(court._id, slot._id);
-                        const isBooked = slot.availableCourts === 0;
-
-                        return (
-                          <button
-                            key={slot._id}
-                            onClick={() => handleAddItem(court, slot)}
-                            disabled={isBooked || isSelected}
-                            className={`p-3 border-2 rounded-xl flex flex-col items-center justify-center transition-all ${
-                              isSelected
-                                ? "border-green-500 bg-green-50 cursor-not-allowed"
-                                : isBooked
-                                ? "border-gray-300 bg-gray-100 cursor-not-allowed opacity-50"
-                                : "border-indigo-500 bg-white hover:bg-indigo-50 cursor-pointer"
-                            }`}
-                          >
-                            <span className="text-xs text-gray-600">
-                              {slot.duration} min
-                            </span>
-                            <span className="font-bold text-sm">
-                              {slot.startTime} - {slot.endTime}
-                            </span>
-                            <span className="text-sm font-semibold text-indigo-600">
-                              {isBooked
-                                ? "Booked"
-                                : `Rp ${slot.price.toLocaleString()}`}
-                            </span>
-                            {isSelected && (
-                              <span className="text-xs text-green-600 mt-1">
-                                ✓ Added
-                              </span>
-                            )}
-                          </button>
-                        );
-                      })}
-                    </div>
+                    ))}
                   </div>
-                ))}
+                )}
+              </div>
+            )}
+
+            {!selectedDate && (
+              <div className="text-center py-12 text-white">
+                <p className="text-lg">Please select a date to start booking</p>
               </div>
             )}
           </div>
-        )}
 
-        {/* Step 3: Review & Submit */}
-        {selectedItems.length > 0 && (
-          <div className="bg-white rounded-2xl shadow-md p-6">
-            <h2 className="text-xl font-semibold mb-4">
-              Step 3: Review Your Booking
-            </h2>
+          {/* RIGHT SIDE: Preview Booking */}
+          <div className="lg:col-span-1">
+            {selectedItems.length > 0 ? (
+              <div className="bg-gray-800 rounded-2xl shadow-md p-6 sticky top-8">
+                <h2 className="text-xl font-semibold mb-4 text-slate-300">
+                  Review Your Booking
+                </h2>
 
-            <div className="space-y-3 mb-6">
-              {selectedItems.map((item, index) => (
-                <div
-                  key={index}
-                  className="flex items-center justify-between p-4 border rounded-lg"
-                >
-                  <div className="flex-1">
-                    <h4 className="font-semibold">{item.courtName}</h4>
-                    <p className="text-sm text-gray-600">{item.timeRange}</p>
-                  </div>
-                  <div className="flex items-center gap-4">
-                    <span className="font-bold text-indigo-600">
-                      Rp {item.price.toLocaleString()}
-                    </span>
-                    <button
-                      onClick={() => handleRemoveItem(index)}
-                      className="text-red-500 hover:text-red-700"
+                <div className="space-y-3 mb-6 max-h-[60vh] overflow-y-auto pr-2">
+                  {selectedItems.map((item, index) => (
+                    <div
+                      key={index}
+                      className="flex items-center justify-between p-4 border border-gray-700 rounded-lg"
                     >
-                      <FaTrash />
-                    </button>
-                  </div>
+                      <div className="flex-1">
+                        <h4 className="font-semibold">{item.courtName}</h4>
+                        <p className="text-sm text-white">{item.timeRange}</p>
+                      </div>
+                      <div className="flex items-center gap-4">
+                        <span className="font-bold text-slate-600">
+                          Rp {item.price.toLocaleString()}
+                        </span>
+                        <button
+                          onClick={() => handleRemoveItem(index)}
+                          className="text-red-500 hover:text-red-700"
+                        >
+                          <FaTrash />
+                        </button>
+                      </div>
+                    </div>
+                  ))}
                 </div>
-              ))}
-            </div>
 
-            <div className="border-t pt-4">
-              <div className="flex justify-between items-center mb-4">
-                <span className="text-lg font-semibold">Total Price:</span>
-                <span className="text-2xl font-bold text-indigo-600">
-                  Rp {totalPrice.toLocaleString()}
-                </span>
+                <div className="border-t border-gray-700 pt-4">
+                  <div className="flex justify-between items-center mb-4">
+                    <span className="text-lg font-semibold">Total:</span>
+                    <span className="text-2xl font-bold text-slate-300">
+                      Rp {totalPrice.toLocaleString()}
+                    </span>
+                  </div>
+
+                  <button
+                    onClick={handleSubmitBooking}
+                    disabled={loading}
+                    className={`w-full cursor-pointer py-4 rounded-xl text-white font-semibold text-lg transition-all ${
+                      loading
+                        ? "bg-gray-700 cursor-not-allowed"
+                        : "bg-slate-600 hover:bg-slate-700 border border-white"
+                    }`}
+                  >
+                    {loading ? "Processing..." : "Proceed to Payment"}
+                  </button>
+                </div>
               </div>
-
-              <button
-                onClick={handleSubmitBooking}
-                disabled={loading}
-                className={`w-full py-4 rounded-xl text-white font-semibold text-lg transition-all ${
-                  loading
-                    ? "bg-gray-400 cursor-not-allowed"
-                    : "bg-indigo-600 hover:bg-indigo-700"
-                }`}
-              >
-                {loading ? "Processing..." : "Proceed to Payment"}
-              </button>
-            </div>
+            ) : (
+              <div className="bg-gray-800 rounded-2xl shadow-md p-6 text-white text-center sticky top-8">
+                <p>No items selected yet</p>
+              </div>
+            )}
           </div>
-        )}
-
-        {/* Empty state */}
-        {!selectedDate && (
-          <div className="text-center py-12 text-gray-500">
-            <p className="text-lg">Please select a date to start booking</p>
-          </div>
-        )}
+        </div>
       </div>
     </div>
   );

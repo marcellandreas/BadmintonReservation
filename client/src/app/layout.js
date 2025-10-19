@@ -1,9 +1,9 @@
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { ClerkProvider } from "@clerk/nextjs";
-import Header from "@/components/navigation/Header";
-import Footer from "@/components/navigation/Footer";
+import { Toaster } from "react-hot-toast";
 import { AppContextProvider } from "@/context/AppContext";
+import MainLayout from "@/components/layout/MainLayout";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -34,9 +34,8 @@ export default function RootLayout({ children }) {
           <body
             className={`${geistSans.variable} ${geistMono.variable} antialiased`}
           >
-            <Header />
-            {children}
-            <Footer />
+            <Toaster position="bottom-right" />
+            <MainLayout>{children}</MainLayout>
           </body>
         </AppContextProvider>
       </ClerkProvider>

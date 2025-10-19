@@ -1,26 +1,27 @@
 "use client";
 
+import { useAppContext } from "@/context/AppContext";
 import { motion } from "framer-motion";
 import Image from "next/image";
+import { useEffect, useState } from "react";
 
 export default function Home() {
-  const courts = [
-    {
-      src: "https://images.unsplash.com/photo-1598992596435-494d3b2a3a8e?auto=format&fit=crop&w=800&q=80",
-      name: "Court 1",
-      desc: "High-quality floor and perfect lighting.",
-    },
-    {
-      src: "https://images.unsplash.com/photo-1628177745311-b2e620cfb50e?auto=format&fit=crop&w=800&q=80",
-      name: "Court 2",
-      desc: "Spacious area and professional vibe.",
-    },
-    {
-      src: "https://images.unsplash.com/photo-1592990405991-2b42eec7a8af?auto=format&fit=crop&w=800&q=80",
-      name: "Court 3",
-      desc: "Comfortable for casual & competitive play.",
-    },
-  ];
+  const { axios } = useAppContext();
+  const [courts, setCourts] = useState([]);
+
+  useEffect(() => {
+    const fetchCourts = async () => {
+      try {
+        const res = await axios.get("/api/court");
+        setCourts(res.data.data);
+        console.log(res.data.data);
+      } catch (error) {
+        console.error("Error fetching courts:", error);
+      }
+    };
+
+    fetchCourts();
+  }, [axios]);
 
   const steps = [
     { step: "1", title: "Choose Date", desc: "Pick the perfect day to play." },
@@ -102,13 +103,13 @@ export default function Home() {
               className="min-w-[300px] rounded-2xl overflow-hidden shadow-lg bg-gray-800 flex-shrink-0"
             >
               <img
-                src={court.src}
+                src={court.image}
                 alt={court.name}
                 className="w-full h-56 object-cover"
               />
               <div className="p-4">
                 <h3 className="text-lg font-bold text-red-500">{court.name}</h3>
-                <p className="text-gray-300 text-sm">{court.desc}</p>
+                <p className="text-gray-300 text-sm">{court.description}</p>
               </div>
             </motion.div>
           ))}

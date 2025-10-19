@@ -19,10 +19,13 @@ export const getAllBookings = async (req, res) => {
 
 // Get user bookings
 export const getUserBookings = async (req, res) => {
+  const { userId } = req.auth();
+  console.log(userId);
+
   try {
-    const bookings = await Booking.find({ user: req.userId })
-      .populate("court")
-      .populate("timeSlot")
+    const bookings = await Booking.find({ user: userId })
+      .populate("items.court")
+      .populate("items.timeSlot")
       .sort({ createdAt: -1 });
 
     res.status(200).json({ success: true, data: bookings });
@@ -66,6 +69,8 @@ export const createBooking = async (req, res) => {
   try {
     const { bookingDate, items, notes } = req.body;
 
+    const { userId } = req.auth();
+
     // Validation
     if (!bookingDate || !items || !Array.isArray(items) || items.length === 0) {
       return res.status(400).json({
@@ -75,7 +80,7 @@ export const createBooking = async (req, res) => {
     }
 
     // Validate userId from middleware
-    if (!req.userId) {
+    if (!userId) {
       return res.status(401).json({
         success: false,
         message: "User authentication required",
@@ -147,7 +152,7 @@ export const createBooking = async (req, res) => {
 
     // Create single booking with multiple items
     const newBooking = new Booking({
-      user: req.userId,
+      user: userId,
       items: validatedItems,
       bookingDate: parsedDate,
       totalPrice,
@@ -244,6 +249,7 @@ export const updatePaymentStatus = async (req, res) => {
 export const cancelBooking = async (req, res) => {
   try {
     const booking = await Booking.findById(req.params.id);
+    const { userId } = req.auth();
 
     if (!booking) {
       return res
@@ -252,7 +258,7 @@ export const cancelBooking = async (req, res) => {
     }
 
     // Check if user is authorized
-    if (booking.user.toString() !== req.userId && req.user.role !== "admin") {
+    if (booking.user.toString() !== userId && req.user.role !== "admin") {
       return res.status(403).json({
         success: false,
         message: "Not authorized to cancel this booking",

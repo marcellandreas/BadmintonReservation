@@ -117,20 +117,20 @@ const MyBookingsPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
+    <div className="min-h-screen bg-neutral-900 text-neutral-100 py-10">
       <div className="container mx-auto px-4">
-        <h1 className="text-3xl font-bold mb-8">My Bookings</h1>
+        <h1 className="text-3xl font-bold mb-8 text-white">My Bookings</h1>
 
         {/* Filter Tabs */}
-        <div className="bg-white rounded-xl shadow-md p-2 mb-8 flex gap-2">
+        <div className="bg-neutral-800 rounded-2xl shadow-md p-2 mb-8 flex gap-2">
           {["all", "pending", "confirmed", "cancelled"].map((status) => (
             <button
               key={status}
               onClick={() => setFilter(status)}
-              className={`flex-1 py-3 px-4 rounded-lg font-semibold capitalize transition-all ${
+              className={`flex-1 py-3 px-4 rounded-xl font-semibold capitalize transition-all duration-200 ${
                 filter === status
-                  ? "bg-indigo-600 text-white"
-                  : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                  ? "bg-red-600 text-white"
+                  : "bg-neutral-700 text-neutral-300 hover:bg-neutral-600"
               }`}
             >
               {status}
@@ -140,11 +140,11 @@ const MyBookingsPage = () => {
 
         {/* Bookings List */}
         {filteredBookings.length === 0 ? (
-          <div className="bg-white rounded-xl shadow-md p-12 text-center">
-            <p className="text-xl text-gray-500">No bookings found</p>
+          <div className="bg-neutral-800 rounded-2xl shadow-lg p-12 text-center">
+            <p className="text-xl text-neutral-400">No bookings found</p>
             <button
               onClick={() => (window.location.href = "/booking")}
-              className="mt-4 px-6 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700"
+              className="mt-6 px-6 py-3 bg-red-600 text-white rounded-xl font-semibold hover:bg-red-700 transition-all"
             >
               Make a Booking
             </button>
@@ -154,25 +154,25 @@ const MyBookingsPage = () => {
             {filteredBookings.map((booking) => (
               <div
                 key={booking._id}
-                className="bg-white rounded-xl shadow-md overflow-hidden"
+                className="bg-neutral-800 rounded-2xl shadow-lg overflow-hidden border border-neutral-700"
               >
                 {/* Header */}
-                <div className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white p-6">
+                <div className="bg-neutral-900 text-white p-6 border-b border-neutral-700">
                   <div className="flex justify-between items-start">
                     <div>
                       <h3 className="text-xl font-bold mb-2">
                         Booking #{booking._id.slice(-6)}
                       </h3>
-                      <div className="flex items-center gap-2 text-sm">
+                      <div className="flex items-center gap-2 text-sm text-neutral-400">
                         <FaCalendar />
                         <span>{formatDate(booking.bookingDate)}</span>
                       </div>
                     </div>
                     <div className="text-right">
-                      <div className="text-2xl font-bold">
+                      <div className="text-2xl font-bold text-red-500">
                         Rp {booking.totalPrice.toLocaleString()}
                       </div>
-                      <div className="text-sm opacity-90">
+                      <div className="text-sm text-neutral-400">
                         {booking.items.length} item(s)
                       </div>
                     </div>
@@ -204,26 +204,26 @@ const MyBookingsPage = () => {
                     {booking.items.map((item, index) => (
                       <div
                         key={index}
-                        className="flex items-center gap-4 p-4 bg-gray-50 rounded-lg"
+                        className="flex items-center gap-4 p-4 bg-neutral-700/50 rounded-xl"
                       >
                         <div className="flex-1">
-                          <div className="flex items-center gap-2 text-lg font-semibold">
-                            <FaMapMarkerAlt className="text-indigo-600" />
+                          <div className="flex items-center gap-2 text-lg font-semibold text-white">
+                            <FaMapMarkerAlt className="text-red-500" />
                             {item.court.name}
                           </div>
-                          <div className="flex items-center gap-2 text-gray-600 mt-1">
+                          <div className="flex items-center gap-2 text-neutral-400 mt-1">
                             <FaClock />
                             {item.timeSlot.startTime} - {item.timeSlot.endTime}
                           </div>
-                          <p className="text-sm text-gray-500 mt-1">
+                          <p className="text-sm text-neutral-500 mt-1">
                             {item.court.description}
                           </p>
                         </div>
                         <div className="text-right">
-                          <div className="text-lg font-bold text-indigo-600">
+                          <div className="text-lg font-bold text-red-500">
                             Rp {item.price.toLocaleString()}
                           </div>
-                          <div className="text-xs text-gray-500">
+                          <div className="text-xs text-neutral-400">
                             {item.timeSlot.duration} minutes
                           </div>
                         </div>
@@ -232,7 +232,7 @@ const MyBookingsPage = () => {
                   </div>
 
                   {/* Actions */}
-                  <div className="flex gap-3 border-t pt-4">
+                  <div className="flex gap-3 border-t border-neutral-700 pt-4">
                     {booking.status === "pending" &&
                       booking.paymentStatus === "unpaid" && (
                         <>
@@ -240,13 +240,13 @@ const MyBookingsPage = () => {
                             onClick={() =>
                               (window.location.href = `/payment/${booking._id}`)
                             }
-                            className="flex-1 py-3 bg-indigo-600 text-white rounded-lg font-semibold hover:bg-indigo-700 transition-all"
+                            className="flex-1 py-3 bg-red-600 text-white rounded-xl font-semibold hover:bg-red-700 transition-all"
                           >
                             Pay Now
                           </button>
                           <button
                             onClick={() => handleCancelBooking(booking._id)}
-                            className="px-6 py-3 bg-red-600 text-white rounded-lg font-semibold hover:bg-red-700 transition-all"
+                            className="px-6 py-3 bg-neutral-700 text-neutral-200 rounded-xl font-semibold hover:bg-neutral-600 transition-all"
                           >
                             Cancel
                           </button>
@@ -254,13 +254,13 @@ const MyBookingsPage = () => {
                       )}
 
                     {booking.status === "confirmed" && (
-                      <div className="flex-1 text-center py-3 bg-green-50 text-green-700 rounded-lg font-semibold">
+                      <div className="flex-1 text-center py-3 bg-green-700/20 text-green-400 rounded-xl font-semibold">
                         ✓ Booking Confirmed
                       </div>
                     )}
 
                     {booking.status === "cancelled" && (
-                      <div className="flex-1 text-center py-3 bg-gray-50 text-gray-500 rounded-lg font-semibold">
+                      <div className="flex-1 text-center py-3 bg-neutral-700 text-neutral-400 rounded-xl font-semibold">
                         Booking Cancelled
                       </div>
                     )}
@@ -268,13 +268,13 @@ const MyBookingsPage = () => {
 
                   {/* Payment Info */}
                   {booking.paidAt && (
-                    <div className="mt-4 p-3 bg-green-50 rounded-lg text-sm">
-                      <span className="text-green-700 font-semibold">
+                    <div className="mt-4 p-3 bg-green-800/20 rounded-xl text-sm">
+                      <span className="text-green-400 font-semibold">
                         Paid at:{" "}
                         {new Date(booking.paidAt).toLocaleString("id-ID")}
                       </span>
                       {booking.transactionId && (
-                        <span className="text-gray-600 ml-4">
+                        <span className="text-neutral-400 ml-4">
                           Transaction ID: {booking.transactionId}
                         </span>
                       )}
@@ -283,16 +283,16 @@ const MyBookingsPage = () => {
 
                   {/* Notes */}
                   {booking.notes && (
-                    <div className="mt-4 p-3 bg-blue-50 rounded-lg text-sm">
-                      <span className="font-semibold text-blue-900">
+                    <div className="mt-4 p-3 bg-blue-800/20 rounded-xl text-sm">
+                      <span className="font-semibold text-blue-300">
                         Notes:{" "}
                       </span>
-                      <span className="text-blue-700">{booking.notes}</span>
+                      <span className="text-blue-200">{booking.notes}</span>
                     </div>
                   )}
 
                   {/* Timestamp */}
-                  <div className="mt-4 text-xs text-gray-500 text-right">
+                  <div className="mt-4 text-xs text-neutral-500 text-right">
                     Created:{" "}
                     {new Date(booking.createdAt).toLocaleString("id-ID")}
                   </div>
